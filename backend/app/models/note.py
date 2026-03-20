@@ -10,4 +10,5 @@ class Note(Base):
     title = Column(String, nullable=False)
     content = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    # Ensure updated_at is not NULL on insert (so response validation passes)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
