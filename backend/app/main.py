@@ -5,7 +5,7 @@ from app.core.database import Base, engine
 from app.models import user, note
 
 from app.api.auth import router as auth_router
-from app.api.note import router as note_router
+from app.api.notes import router as note_router
 
 app = FastAPI()
 
