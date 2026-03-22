@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -45,6 +46,35 @@ def delete_note(db: Session, note_id: int, user_id: int) -> Optional[DeleteRespo
     db.delete(existing_note)
     db.commit()
     return DeleteResponse(message="Note deleted successfully")
+
+def _notes_search_base_query(db: Session, user_id: int, query: Optional[str]):
+    q = db.query(Note).filter(Note.user_id == user_id)
+    if query:
+        pattern = f"%{query}%"
+        q = q.filter(or_(Note.title.ilike(pattern), Note.content.ilike(pattern)))
+    return q
+
+
+def search_notes(
+    db: Session,
+    user_id: int,
+    query: Optional[str],
+    page: int,
+    page_size: int,
+) -> dict:
+    # Build twice: some SQLAlchemy versions alter the query after `.count()`.
+    total = _notes_search_base_query(db, user_id, query).count()
+    notes = (
+        _notes_search_base_query(db, user_id, query)
+        .order_by(Note.updated_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    for n in notes:
+        _ensure_updated_at(n)
+
+    return {"items": notes, "total": total}
 
 def _ensure_updated_at(note: Note) -> None:
     """

@@ -18,3 +18,10 @@ class NoteResponse(BaseModel):
 
 class DeleteResponse(BaseModel):
     message: str
+
+class NoteListResponse(BaseModel):
+    total: int
+    items: list[NoteResponse]
+    
+    class Config:
+        from_attributes = True
