@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class NoteCreate(BaseModel):
@@ -22,6 +22,35 @@ class DeleteResponse(BaseModel):
 class NoteListResponse(BaseModel):
     total: int
     items: list[NoteResponse]
-    
+
     class Config:
         from_attributes = True
+
+
+class ApiErrorPayload(BaseModel):
+    code: str
+    message: str
+
+
+class EnvelopeNoteList(BaseModel):
+    """Matches app.core.response.success_response(list of notes)."""
+
+    success: bool
+    data: List[NoteResponse]
+    error: Optional[ApiErrorPayload] = None
+
+
+class EnvelopeNote(BaseModel):
+    """Matches success_response(single note ORM)."""
+
+    success: bool
+    data: NoteResponse
+    error: Optional[ApiErrorPayload] = None
+
+
+class EnvelopeDelete(BaseModel):
+    """Matches success_response(DeleteResponse)."""
+
+    success: bool
+    data: DeleteResponse
+    error: Optional[ApiErrorPayload] = None

@@ -7,9 +7,20 @@ from app.models import user, note
 from app.api.auth import router as auth_router
 from app.api.notes import router as note_router
 
+from app.core.response import success_response, error_response
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+
+import logging
+
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @app.get("/health")
 def health(db: Session = Depends(get_db)):
@@ -17,3 +28,12 @@ def health(db: Session = Depends(get_db)):
 
 app.include_router(auth_router)
 app.include_router(note_router)
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(status_code=exc.status_code, content=error_response("HTTP_ERROR", exc.detail))
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"An unexpected error occurred: {exc}")
+    return JSONResponse(status_code=500, content=error_response("INTERNAL_SERVER_ERROR", "An unexpected error occurred"))

@@ -19,7 +19,9 @@ def update_note(db: Session, note_id: int, user_id: int, data: NoteCreate) -> Op
     return repository.update(db, note_id, user_id, data.title, data.content)
 
 def delete_note(db: Session, note_id: int, user_id: int) -> Optional[DeleteResponse]:
-    return repository.delete(db, note_id, user_id)
+    if repository.delete(db, note_id, user_id):
+        return DeleteResponse(message="Note deleted successfully")
+    return None
 
 def search_notes(
     db: Session,

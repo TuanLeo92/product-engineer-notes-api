@@ -27,26 +27,41 @@ class NoteRepository:
 
     def update(self, db: Session, note_id: int, user_id: int, title: str, content: Optional[str]) -> Optional[Note]:
         note = self.get_by_id(db, note_id, user_id)
-        if note:
-            note.title = title
-            note.content = content
+        if note is None:
+            return None
+        note.title = title
+        note.content = content
+        note.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(note)
+        return note
 
-    def delete(self, db: Session, note_id: int, user_id: int):
+    def delete(self, db: Session, note_id: int, user_id: int) -> bool:
         note = self.get_by_id(db, note_id, user_id)
-        if note:
-            db.delete(note)
-            db.commit()
-            return True
-        return False
+        if note is None:
+            return False
+        db.delete(note)
+        db.commit()
+        return True
 
     def search(self, db: Session, user_id: int, query: Optional[str], page: int, page_size: int):
-        db_query = db.query(Note).filter(Note.user_id == user_id)
-        
-        if query:
-            db_query = db_query.filter(or_(Note.title.ilike(f"%{query}%"), Note.content.ilike(f"%{query}%")))
+        def base_query():
+            q = db.query(Note).filter(Note.user_id == user_id)
+            if query:
+                pattern = f"%{query}%"
+                q = q.filter(or_(Note.title.ilike(pattern), Note.content.ilike(pattern)))
+            return q
 
-        total = db_query.count()
-        items = db_query.offset((page - 1) * page_size).limit(page_size)
+        total = base_query().count()
+        items = (
+            base_query()
+            .order_by(Note.updated_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+        for n in items:
+            self._ensure_updated_at(n)
         return total, items
 
     def _ensure_updated_at(self, note: Note) -> None:
