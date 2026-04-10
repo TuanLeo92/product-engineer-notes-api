@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+python-jose[cryptography]
+# passlib 1.7.4 expects bcrypt<4 (bcrypt 4+ removed __about__; breaks backend init and triggers 72-byte test errors)
+passlib[bcrypt]==1.7.4
+bcrypt>=3.2.0,<4.0.0
