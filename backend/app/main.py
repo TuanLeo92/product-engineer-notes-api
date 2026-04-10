@@ -1,6 +1,4 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-from app.core.deps import get_db
+from fastapi import FastAPI
 from app.core.database import Base, engine
 from app.models import user, note
 
@@ -41,7 +39,8 @@ def root():
 
 
 @app.get("/health")
-def health(db: Session = Depends(get_db)):
+def health():
+    """Liveness for Railway: do not hit DB here (DB issues caused flaky deploys / 502)."""
     return {"status": "ok"}
 
 app.include_router(auth_router)
