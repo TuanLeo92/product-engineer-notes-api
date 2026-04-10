@@ -1,5 +1,5 @@
 # Railway: build API from repo root (FastAPI lives under backend/app).
 # https://docs.railway.app/deploy/dockerfiles
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "backend/DOCKERFILE"
+dockerfilePath = "backend/Dockerfile"
