@@ -14,13 +14,31 @@ from fastapi.requests import Request
 
 import logging
 
-app = FastAPI()
+app = FastAPI(
+    title="Notes API",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 
 Base.metadata.create_all(bind=engine)
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    """Public URL often has no path; point clients at interactive docs."""
+    return {
+        "message": "Notes API",
+        "docs": "/docs",
+        "redoc": "/redoc",
+        "openapi": "/openapi.json",
+        "health": "/health",
+    }
+
 
 @app.get("/health")
 def health(db: Session = Depends(get_db)):
