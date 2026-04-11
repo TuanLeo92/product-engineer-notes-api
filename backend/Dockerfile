@@ -3,7 +3,7 @@ FROM python:3.11
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8080
+ENV PORT=8000
 
 COPY requirements.txt .
 
