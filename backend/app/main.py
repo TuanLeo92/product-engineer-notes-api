@@ -1,29 +1,45 @@
-from fastapi import FastAPI
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
+
 from app.core.database import Base, engine
+from app.core.response import error_response
 from app.models import user, note
 
 from app.api.auth import router as auth_router
 from app.api.notes import router as note_router
 
-from app.core.response import success_response, error_response
-from fastapi import HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.requests import Request
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-import logging
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Do not run create_all at import time: uvicorn imports this module before binding $PORT.
+    A slow/unreachable DB would block startup → Railway healthcheck sees 'service unavailable'.
+    """
+    try:
+        def _create_tables():
+            Base.metadata.create_all(bind=engine)
+
+        await asyncio.to_thread(_create_tables)
+    except Exception:
+        logger.exception("create_all failed; API will still start (fix DATABASE_URL / Postgres)")
+    yield
+
 
 app = FastAPI(
     title="Notes API",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
-
-Base.metadata.create_all(bind=engine)
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 @app.get("/", include_in_schema=False)
