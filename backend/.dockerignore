@@ -1,11 +1,17 @@
+# Context is always this folder (Railway root = backend, or docker compose build .).
+# Repo-level folders (mobile, docs, etc.) are outside context and never copied.
+
 .git
 .gitignore
 **/__pycache__
 **/*.pyc
 **/.pytest_cache
+**/.mypy_cache
 **/.venv
 **/venv
 **/.env
 **/.env.*
 *.md
-mobile
+# If these appear inside backend by mistake, keep them out of the image:
+docs/
+mobile/

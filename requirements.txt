@@ -1,8 +1,0 @@
-# Keep in sync with backend/requirements.txt (Railpack reads this at repo root).
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary
-python-jose[cryptography]
-passlib[bcrypt]==1.7.4
-bcrypt>=3.2.0,<4.0.0
