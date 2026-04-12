@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:notes_app/core/network/dio_client.dart';
+import 'package:notes_app/core/storage/token_storage.dart';
 import 'package:notes_app/data/api/auth_api.dart';
+import 'package:notes_app/data/api/note_api.dart';
+import 'package:notes_app/presentation/notes_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,21 +28,44 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Notes App',
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Notes')),
-        body: const Center(child: Text('App Started')),
+      home: Builder(
+        builder: (navContext) => Scaffold(
+          appBar: AppBar(title: const Text('Notes')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('App Started'),
+                TextButton(
+                  onPressed: () => Navigator.of(navContext).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => const NotesPage(),
+                    ),
+                  ),
+                  child: const Text('Notes'),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
   void testLogin() async {
-  final client = DioClient(() async => null);
-  final api = AuthApi(client.dio);
+    final storage = TokenStorage();
+    final client = DioClient(() async => await storage.getToken());
 
-  final email = "tuan.le@gmail.com";
+    final noteApi = NoteApi(client.dio);
+    final api = AuthApi(client.dio);
+    final email = "tuan.le@gmail.com";
+    final token = await api.login(email, "123456");
 
-  final token = await api.login(email, "123456");
-  print("Logged in: ${email}");
-  print("Token: ${token}");
-}
+    print("Logged in: ${email}");
+    print("Token: ${token}");
+    await storage.setToken(token);
+
+    final notes = await noteApi.getNotes();
+    print("Notes: ${notes}");
+ }
 }
