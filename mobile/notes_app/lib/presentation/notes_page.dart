@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:notes_app/core/network/dio_client.dart';
 import 'package:notes_app/core/storage/token_storage.dart';
 import 'package:notes_app/data/api/note_api.dart';
+import 'package:notes_app/data/repositories/note_repository.dart';
+import 'package:notes_app/domain/usecases/get_notes_use_case.dart';
+import 'package:notes_app/presentation/bloc/note_bloc.dart';
 
 class NotesPage extends StatefulWidget {
   const NotesPage({super.key});
@@ -35,16 +39,39 @@ class _NotesPageState extends State<NotesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Notes")),
-      body: ListView.builder(
-        itemCount: notes.length,
-        itemBuilder: (_, index) {
-          final note = notes[index];
-          return ListTile(
-            title: Text(note["title"]),
-            subtitle: Text(note["content"]),
-          );
-        },
-      ),
+      body: BlocProvider(
+  create: (_) {
+    final storage = TokenStorage();
+    final client = DioClient(() => storage.getToken());
+    final api = NoteApi(client.dio);
+    final repo = NoteRepository(api);
+    final usecase = GetNotesUseCase(repo);
+
+    return NoteBloc(usecase)..add(LoadNotes());
+  },
+  child: BlocBuilder<NoteBloc, NoteState>(
+    builder: (context, state) {
+      if (state is NoteLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (state is NoteLoaded) {
+        return ListView.builder(
+          itemCount: state.notes.length,
+          itemBuilder: (_, index) {
+            final note = state.notes[index];
+            return ListTile(
+              title: Text(note.title),
+              subtitle: Text(note.content),
+            );
+          },
+        );
+      }
+
+      return const SizedBox();
+    },
+  ),
+)
     );
   }
 }
